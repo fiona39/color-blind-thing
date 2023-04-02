@@ -1,1 +1,3 @@
 '../../../../../Users/fionaqian/Library/Python/3.9/bin/streamlit' run test_streamlit.py
+
+python3 test.py
