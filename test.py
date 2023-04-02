@@ -1,0 +1,80 @@
+# import torch
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+cam = cv2.VideoCapture(0)
+
+pro_sim_matrix = np.array([[0, 0.90822864, 0.008192], [0, 1, 0], [0, 0, 1]], dtype=np.float16)
+deu_sim_matrix =  np.array([[1, 0, 0], [1.10104433,  0, -0.00901975], [0, 0, 1]], dtype=np.float16)
+tri_sim_matrix = np.array([[1, 0, 0], [0, 1, 0], [-0.15773032,  1.19465634, 0]], dtype=np.float16)
+
+rgb_matrix = np.array(
+        [[ 2.85831110e+00, -1.62870796e+00, -2.48186967e-02],
+        [-2.10434776e-01,  1.15841493e+00,  3.20463334e-04],
+        [-4.18895045e-02, -1.18154333e-01,  1.06888657e+00]]
+        )
+
+lms_matrix = np.array(
+        [[0.3904725 , 0.54990437, 0.00890159],
+        [0.07092586, 0.96310739, 0.00135809],
+        [0.02314268, 0.12801221, 0.93605194]]
+        )
+
+# check, frame = cam.read()
+# lms_img = np.tensordot(frame, lms_matrix, axes=([2],[1]))
+# transformed = np.tensordot(lms_img, sim_matrix, axes=([2],[1]))
+# rgb_img = np.tensordot(frame, rgb_matrix, axes=([2],[1])).astype(np.uint8)
+# plt.imshow(np.concatenate((rgb_img, frame), axis=1))
+# plt.show()
+
+# plt.imshow(frame)
+# plt.show()
+# width, height = frame.shape[1], frame.shape[0]
+# new_colors = np.zeros((height, width, 3), dtype=np.uint8)
+# for i in range(height):
+#     for j in range(width):
+#         color_cb = np.tensordot(np.array(frame[i][j]).reshape((1,1,3)),sim_matrix, axes=([2],[1]))
+#         color_cb = np.tensordot(color_cb,rgb_matrix, axes=([2],[1])).reshape((1,3))
+#         color_cb = [int(color_cb[0][0]), int(color_cb[0][1]),int(color_cb[0][2])] 
+
+
+while True:
+    check, frame = cam.read()
+
+    frame = cv2.flip(frame, 1)
+
+    lms_img = np.tensordot(frame, lms_matrix, axes=([2],[1]))
+    transformed = np.tensordot(lms_img, pro_sim_matrix, axes=([2],[1]))
+    pro_img = np.tensordot(transformed, rgb_matrix, axes=([2],[1])).astype(np.uint8)
+
+    transformed = np.tensordot(lms_img, deu_sim_matrix, axes=([2],[1]))
+    deu_img = np.tensordot(transformed, rgb_matrix, axes=([2],[1])).astype(np.uint8)
+
+    transformed = np.tensordot(lms_img, tri_sim_matrix, axes=([2],[1]))
+    tri_img = np.tensordot(transformed, rgb_matrix, axes=([2],[1])).astype(np.uint8)
+
+    final_frame = np.concatenate((frame, pro_img), axis=1)
+    deu_tri = np.concatenate((tri_img,deu_img), axis=1)
+    final_frame = np.concatenate((final_frame, deu_tri), axis=0)
+
+    pos_x, pos_y = 20, 60
+    cv2.putText(final_frame, "Original", (pos_x, pos_y), cv2.FONT_HERSHEY_COMPLEX, 2, (255,255,255))
+    cv2.putText(final_frame, "Protagonia", (pos_x+frame.shape[1], pos_y), cv2.FONT_HERSHEY_COMPLEX, 2, (255,255,255))
+    cv2.putText(final_frame, "Tritanopia", (pos_x, pos_y+frame.shape[0]), cv2.FONT_HERSHEY_COMPLEX, 2, (255,255,255))
+    cv2.putText(final_frame, "Deuteranopia",(pos_x+frame.shape[1], pos_y+frame.shape[0]), cv2.FONT_HERSHEY_COMPLEX, 2, (255,255,255))
+    cv2.imshow("strawberry", final_frame)
+
+    if cv2.waitKey(1) ==  27 or cv2.waitKey(1) == "q":
+        break
+
+cam.release()
+cv2.destroyAllWindows()
+import streamlit as st
+import cv2
+
+def main():
+    st.title("color blind project")
+
+if __name__ == "__main__":    
+    main()
